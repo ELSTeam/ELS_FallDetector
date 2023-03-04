@@ -2,19 +2,41 @@
 
 import cv2
 import time
+import requests
 from datetime import datetime
 
 
 
 class Detector:
-	def __init__(self,THRESHOLD) -> None:
+	def __init__(self,THRESHOLD:int) -> None:
 		self.THRESHOLD = THRESHOLD
 		self.last_fall = None # save time stamp of the prev fall
 		self.fitToEllipse = False # Number of minutes between Falls to make an alert
 		self.cap = cv2.VideoCapture('example_video.mp4')
 		self.fgbg = cv2.createBackgroundSubtractorMOG2()
 		self.j = 0
+		self.username = None
+		self.password = None
+		self.connteced = False
+	
+	def login(self,username:str,password:str,url:str) -> None:
+		"""
+		Connect user to ELS server. provide user name, password and url of local/production environment
+		"""
+		payload = {"username":username,"password":password}
+		headers = {'Content-Type':'application/json'}
+		res = requests.post(url, json=payload, headers=headers)
+		if res.res.status_code == 200:
+			self.connteced = True
+		else:
+			print("Wrong username / password")
+		
+		
 	def start(self) -> None:
+		if not self.login:
+			print("Please login first (call login function)")
+			return
+		
 		while (1):
 			ret, frame = self.cap.read()
 
