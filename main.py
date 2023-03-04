@@ -33,7 +33,7 @@ class Detector:
 		
 		
 	def start(self) -> None:
-		if not self.login:
+		if not self.connteced:
 			print("Please login first (call login function)")
 			return
 		
