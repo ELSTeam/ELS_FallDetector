@@ -28,6 +28,8 @@ class Detector:
 		res = requests.post(url, json=payload, headers=headers)
 		if res.res.status_code == 200:
 			self.connteced = True
+			self.username = username
+			self.password = password
 		else:
 			print("Wrong username / password")
 		
