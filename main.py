@@ -11,7 +11,7 @@ import threading
 class Detector:
 	def __init__(self,THRESHOLD:int,mode:int,url:str) -> None:
 		self.THRESHOLD = THRESHOLD
-		self.server_url = f'{url}/fall_detected'
+		self.server_url = url
 		self.last_fall = None # save time stamp of the prev fall
 		self.fitToEllipse = False # Number of minutes between Falls to make an alert
 		self.fgbg = cv2.createBackgroundSubtractorMOG2()
@@ -33,14 +33,14 @@ class Detector:
 		self.out = cv2.VideoWriter(f'fall_{date.today()}.mp4', fourcc, 20.0, size)
 		self.seconds_interval = 5
 	
-	def login(self,username:str,password:str,url:str) -> None:
+	def login(self,username:str,password:str) -> None:
 		"""
 		Connect user to ELS server. provide user name, password and url of local/production environment
 		"""
 		payload = {"username":username,"password":password}
 		headers = {'Content-Type':'application/json'}
-		res = requests.post(url, json=payload, headers=headers)
-		if res.res.status_code == 200:
+		res = requests.post(f'{self.url}/sign_in', json=payload, headers=headers)
+		if res.status_code == 200:
 			self.connteced = True
 			self.username = username
 			self.password = password
@@ -125,7 +125,7 @@ class Detector:
 
 		payload = {"username":self.username, "fall_info":{"date": ""}}
 		headers = {'Content-Type': 'application/json'}
-		res = requests.post(self.server_url, json=payload, headers=headers)
+		res = requests.post(f'{self.server_url}/fall_detected', json=payload, headers=headers)
 		if res.status_code != 200:
 			print("Error sending post")
 
@@ -136,5 +136,5 @@ if __name__ == "__main__":
 	parser.add_argument('URL',type=str,help='The URL of the server')
 	args = parser.parse_args()
 	detector = Detector(args.Threshold,args.Mode,args.URL) # gets the number of Threshold in minutes.
-	detector.login("omerap12","Aa123456!",'/sign_in')
+	detector.login("omerap12","Aa123456!")
 	detector.start()
