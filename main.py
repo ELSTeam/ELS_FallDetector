@@ -39,7 +39,7 @@ class Detector:
 		"""
 		payload = {"username":username,"password":password}
 		headers = {'Content-Type':'application/json'}
-		res = requests.post(f'{self.url}/sign_in', json=payload, headers=headers)
+		res = requests.post(f'{self.server_url}/sign_in', json=payload, headers=headers)
 		if res.status_code == 200:
 			self.connteced = True
 			self.username = username
