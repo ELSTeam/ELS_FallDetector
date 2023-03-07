@@ -6,11 +6,12 @@ import requests
 from datetime import datetime
 from datetime import date
 import argparse
-
+import threading
 
 class Detector:
-	def __init__(self,THRESHOLD:int,mode:int) -> None:
+	def __init__(self,THRESHOLD:int,mode:int,url:str) -> None:
 		self.THRESHOLD = THRESHOLD
+		self.server_url = f'{url}/fall_detected'
 		self.last_fall = None # save time stamp of the prev fall
 		self.fitToEllipse = False # Number of minutes between Falls to make an alert
 		self.fgbg = cv2.createBackgroundSubtractorMOG2()
@@ -48,12 +49,12 @@ class Detector:
 		
 		
 	def start(self) -> None:
-#		if not self.connteced:
-#			print("Please login first (call login function)")
-#			return
-		Falled = False # For recording puproses
+		if not self.connteced:
+			print("Please login first (call login function)")
+			return
 		while (1):
 			ret, frame = self.cap.read()
+			self.frame = frame
 
 			# Convert each frame to gray scale and subtract the background
 			try:
@@ -62,10 +63,6 @@ class Detector:
 
 				# Find contours
 				contours, _ = cv2.findContours(fgmask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-				
-				# if falled detected in falling interval time, record the video 
-				if Falled and (datetime.now() - self.last_fall).seconds < self.seconds_interval:
-					self.out.write(frame)
 
 				if contours:
 					# List to hold all areas
@@ -93,17 +90,17 @@ class Detector:
 					# Falled detected
 					if self.j > 10:
 						if self.last_fall is None:
-							print("FALL Detected")
 							self.last_fall = datetime.now() # save the time of the first fall
-							Falled = True
+							threading.Thread(target=self.send_falling_post).start()
+							print("FALL Detected")
 						else:
 							time_now = datetime.now()
 							delta = time_now - self.last_fall
 							# Checking if the falling occured after the threshold
-							if self.THRESHOLD < int(delta.total_seconds()//60): 
-								print("FALL Detected")
+							if self.THRESHOLD < int(delta.total_seconds()//60):
 								self.last_fall = time_now
-								Falled = True
+								threading.Thread(target=self.send_falling_post).start()
+								print("FALL Detected")
 						cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
 
 					if h > w:
@@ -119,12 +116,25 @@ class Detector:
 				print(e)
 				break
 		cv2.destroyAllWindows()
+	
+	def send_falling_post(self):
+		while (datetime.now() - self.last_fall).seconds < self.seconds_interval:
+			self.out.write(self.frame)
+			time.sleep(0.05)
+		print("Finished filming")
 
+		payload = {"username":self.username, "fall_info":{"date": ""}}
+		headers = {'Content-Type': 'application/json'}
+		res = requests.post(self.server_url, json=payload, headers=headers)
+		if res.status_code != 200:
+			print("Error sending post")
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Arguments for Falling Detector')
 	parser.add_argument('Threshold', type=int,help='Threshold number in minutes')
 	parser.add_argument('Mode', type=int,help='Mode for the Detector.\n 0 -> camera input, 1 -> example video input')
+	parser.add_argument('URL',type=str,help='The URL of the server')
 	args = parser.parse_args()
-	detector = Detector(args.Threshold,args.Mode) # gets the number of Threshold in minutes.
+	detector = Detector(args.Threshold,args.Mode,args.URL) # gets the number of Threshold in minutes.
+	detector.login("omerap12","Aa123456!",'/sign_in')
 	detector.start()
