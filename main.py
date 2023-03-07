@@ -4,20 +4,26 @@ import cv2
 import time
 import requests
 from datetime import datetime
-
+import argparse
 
 
 class Detector:
-	def __init__(self,THRESHOLD:int) -> None:
+	def __init__(self,THRESHOLD:int,mode:int) -> None:
 		self.THRESHOLD = THRESHOLD
 		self.last_fall = None # save time stamp of the prev fall
 		self.fitToEllipse = False # Number of minutes between Falls to make an alert
-		self.cap = cv2.VideoCapture('example_video.mp4')
 		self.fgbg = cv2.createBackgroundSubtractorMOG2()
 		self.j = 0
 		self.username = None
 		self.password = None
 		self.connteced = False
+		if mode == 1:
+			self.cap = cv2.VideoCapture('example_video.mp4')
+		elif mode == 0:
+			self.cap = cv2.VideoCapture(0)
+		else:
+			print('Mode is 0 or 1')
+			return 
 	
 	def login(self,username:str,password:str,url:str) -> None:
 		"""
@@ -35,9 +41,9 @@ class Detector:
 		
 		
 	def start(self) -> None:
-		if not self.connteced:
-			print("Please login first (call login function)")
-			return
+#		if not self.connteced:
+#			print("Please login first (call login function)")
+#			return
 		
 		while (1):
 			ret, frame = self.cap.read()
@@ -99,5 +105,11 @@ class Detector:
 				break
 		cv2.destroyAllWindows()
 
-detector = Detector(2) # gets the number of Threshold in minutes.
-detector.start()
+
+if __name__ == "__main__":
+	parser = argparse.ArgumentParser(description='Arguments for Falling Detector')
+	parser.add_argument('Threshold', type=int,help='Threshold number in minutes')
+	parser.add_argument('Mode', type=int,help='Mode for the Detector.\n 0 -> camera input, 1 -> example video input')
+	args = parser.parse_args()
+	detector = Detector(args.Threshold,args.Mode) # gets the number of Threshold in minutes.
+	detector.start()
