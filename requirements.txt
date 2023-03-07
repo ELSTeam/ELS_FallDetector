@@ -2,3 +2,4 @@ numpy
 opencv-python
 pylint
 scikit-learn
+requests
