@@ -4,6 +4,7 @@ import cv2
 import time
 import requests
 from datetime import datetime
+from datetime import date
 import argparse
 
 
@@ -23,7 +24,13 @@ class Detector:
 			self.cap = cv2.VideoCapture(0)
 		else:
 			print('Mode is 0 or 1')
-			return 
+			return
+		width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH) + 0.5)
+		height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT) + 0.5)
+		size = (width, height)
+		fourcc = cv2.VideoWriter_fourcc(*'XVID')
+		self.out = cv2.VideoWriter(f'fall_{date.today()}.mp4', fourcc, 20.0, size)
+		self.seconds_interval = 5
 	
 	def login(self,username:str,password:str,url:str) -> None:
 		"""
@@ -44,7 +51,7 @@ class Detector:
 #		if not self.connteced:
 #			print("Please login first (call login function)")
 #			return
-		
+		Falled = False # For recording puproses
 		while (1):
 			ret, frame = self.cap.read()
 
@@ -55,6 +62,10 @@ class Detector:
 
 				# Find contours
 				contours, _ = cv2.findContours(fgmask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+				
+				# if falled detected in falling interval time, record the video 
+				if Falled and (datetime.now() - self.last_fall).seconds < self.seconds_interval:
+					self.out.write(frame)
 
 				if contours:
 					# List to hold all areas
@@ -79,16 +90,20 @@ class Detector:
 					if h < w:
 						self.j += 1
 
+					# Falled detected
 					if self.j > 10:
 						if self.last_fall is None:
 							print("FALL Detected")
-							self.last_fall = datetime.now()
+							self.last_fall = datetime.now() # save the time of the first fall
+							Falled = True
 						else:
 							time_now = datetime.now()
 							delta = time_now - self.last_fall
-							if self.THRESHOLD < int(delta.total_seconds()//60):
+							# Checking if the falling occured after the threshold
+							if self.THRESHOLD < int(delta.total_seconds()//60): 
 								print("FALL Detected")
 								self.last_fall = time_now
+								Falled = True
 						cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
 
 					if h > w:
