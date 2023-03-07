@@ -30,7 +30,8 @@ class Detector:
 		height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT) + 0.5)
 		size = (width, height)
 		fourcc = cv2.VideoWriter_fourcc(*'XVID')
-		self.out = cv2.VideoWriter(f'fall_{date.today()}.mp4', fourcc, 20.0, size)
+		self.video_fall_name = f'fall_{date.today()}.mp4'
+		self.out = cv2.VideoWriter(self.video_fall_name, fourcc, 20.0, size)
 		self.seconds_interval = 5
 	
 	def login(self,username:str,password:str) -> None:
@@ -125,7 +126,8 @@ class Detector:
 
 		payload = {"username":self.username, "fall_info":{"date": ""}}
 		headers = {'Content-Type': 'application/json'}
-		res = requests.post(f'{self.server_url}/fall_detected', json=payload, headers=headers)
+		files = {'fall_video':open(self.video_fall_name,'rb')}
+		res = requests.post(f'{self.server_url}/fall_detected', json=payload, headers=headers,files=files)
 		if res.status_code != 200:
 			print("Error sending post")
 
