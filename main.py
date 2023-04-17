@@ -1,4 +1,3 @@
-# Based on Zed code - Person Fall detection using raspberry pi camera and opencv lib. Link: https://www.youtube.com/watch?v=eXMYZedp0Uo
 import json
 import os
 
