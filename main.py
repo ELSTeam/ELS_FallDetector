@@ -137,6 +137,13 @@ class Detector:
         if res.status_code != 200:
             print("Error sending post")
             exit(1)
+        try:
+           # alert telegram bot
+           headers = {'Content-Type': 'application/json'}
+           requests.post("http://127.0.0.1:8090/fall_telegram", json=payload, headers=headers)
+        except Exception as e:
+            print(e)
+
         os.remove(video_fall_path)
         os.remove(json_fall_path)
 
