@@ -1,6 +1,5 @@
 import json
 import os
-
 import cv2
 import time
 import requests
@@ -8,6 +7,8 @@ from datetime import datetime
 from datetime import date
 import argparse
 import threading
+import random
+import string
 
 
 class Detector:
@@ -30,11 +31,9 @@ class Detector:
             return
         width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH) + 0.5)
         height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT) + 0.5)
-        size = (width, height)
-        fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        self.video_fall_name = f'fall_{date.today()}.mp4'
-        self.out = cv2.VideoWriter(self.video_fall_name, fourcc, 20.0, size)
-        self.seconds_interval = 5
+        self.size = (width, height)
+        self.fourcc = cv2.VideoWriter_fourcc(*'MP4V')
+        self.seconds_interval = 3
 
     def login(self, username: str, password: str) -> None:
         """
@@ -47,6 +46,8 @@ class Detector:
             self.connteced = True
             self.username = username
             self.password = password
+            self.video_fall_name = f'fall_{datetime.now()}#{self.username}.mp4'
+            self.out = cv2.VideoWriter(self.video_fall_name, self.fourcc, 20.0, self.size)
         else:
             print("Wrong username / password")
 
@@ -123,17 +124,14 @@ class Detector:
         while (datetime.now() - self.last_fall).seconds < self.seconds_interval:
             self.out.write(self.frame)
             time.sleep(0.05)
-        print("Finished filming")
+        self.out.release()
         payload = {"username": self.username}
-        json_obj = json.dumps(payload)
-        with open("j.json", "w") as outfile:
-            outfile.write(json_obj)
+        print("Finished filming")
         current_working_path = os.getcwd() + os.sep
         video_fall_path = current_working_path + self.video_fall_name
-        json_fall_path = current_working_path + "j.json"
-        files = {'file': open(video_fall_path, "rb"),
-                 'data': open(json_fall_path, "rb")}
-        res = requests.post(f'{self.server_url}/fall_detected', files=files)
+        with open(self.video_fall_name, 'rb') as f:
+            res = requests.post(f'{self.server_url}/fall_detected', files={'file': f})
+        f.close()
         if res.status_code != 200:
             print("Error sending post")
             exit(1)
@@ -143,9 +141,7 @@ class Detector:
            requests.post("http://127.0.0.1:8090/fall_telegram", json=payload, headers=headers)
         except Exception as e:
             print(e)
-
         os.remove(video_fall_path)
-        os.remove(json_fall_path)
 
 
 if __name__ == "__main__":
