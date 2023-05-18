@@ -125,6 +125,7 @@ class Detector:
             self.out.write(self.frame)
             time.sleep(0.05)
         self.out.release()
+        payload = {"username": self.username}
         print("Finished filming")
         current_working_path = os.getcwd() + os.sep
         video_fall_path = current_working_path + self.video_fall_name
@@ -137,7 +138,7 @@ class Detector:
         try:
            # alert telegram bot
            headers = {'Content-Type': 'application/json'}
-           # requests.post("http://127.0.0.1:8090/fall_telegram", json=payload, headers=headers)
+           requests.post("http://127.0.0.1:8090/fall_telegram", json=payload, headers=headers)
         except Exception as e:
             print(e)
         os.remove(video_fall_path)
