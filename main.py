@@ -34,8 +34,20 @@ class Detector:
         self.size = (width, height)
         self.fourcc = cv2.VideoWriter_fourcc(*'MP4V')
         self.seconds_interval = 3
+        self.login_loop()
+    
+    def login_loop(self) -> None:
+        isLogged = False
+        while not isLogged:
+            username = input("Enter username: ")
+            password = input("Enter password: ")
+            if self.login(username,password):
+                isLogged = True
+            else:
+                print("Wrong user name \ password. Try again.",end="\n\n")
+        
 
-    def login(self, username: str, password: str) -> None:
+    def login(self, username: str, password: str) -> bool:
         """
         Connect user to ELS server. provide user name, password and url of local/production environment
         """
@@ -48,8 +60,9 @@ class Detector:
             self.password = password
             self.video_fall_name = f'fall_{datetime.now()}#{self.username}.mp4'
             self.out = cv2.VideoWriter(self.video_fall_name, self.fourcc, 20.0, self.size)
+            return True
         else:
-            print("Wrong username / password")
+            return False
 
     def start(self) -> None:
         if not self.connteced:
