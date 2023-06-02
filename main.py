@@ -164,5 +164,4 @@ if __name__ == "__main__":
     parser.add_argument('URL', type=str, help='The URL of the server')
     args = parser.parse_args()
     detector = Detector(args.Threshold, args.Mode, args.URL)  # gets the number of Threshold in minutes.
-    detector.login("omerap12", "Aa123456!")
     detector.start()
