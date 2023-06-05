@@ -22,6 +22,7 @@ class Detector:
         self.username = None
         self.password = None
         self.connteced = False
+        self.telegram_url = "http://127.0.0.1:8090/fall_telegram"
         if mode == 1:
             self.cap = cv2.VideoCapture('example_video.mp4')
         elif mode == 0:
@@ -151,7 +152,7 @@ class Detector:
         try:
            # alert telegram bot
            headers = {'Content-Type': 'application/json'}
-           requests.post("http://127.0.0.1:8090/fall_telegram", json=payload, headers=headers)
+           requests.post(self.telegram_url, json=payload, headers=headers)
         except Exception as e:
             print(e)
         os.remove(video_fall_path)
